@@ -4,14 +4,17 @@
 // Holds all information about the CPU
 struct cpu {
  unsigned int PC;
+ unsigned int SP;
  // FL = flag
- unsigned int FL;
+ unsigned char FL;
  unsigned char registers[8];
  unsigned char ram[256];
 };
 
 // ALU operations
 enum alu_op {
+	ALU_MUL,
+	ALU_ADD,
 	ALU_CMP,
 };
 
@@ -21,7 +24,13 @@ enum alu_op {
 #define PRN  0b01000111
 #define HLT  0b00000001
 
-// Defined Instructions for Sprint
+// Defined Instructions for Week project and Sprint
+#define MUL  0b10100010
+#define PUSH 0b01000101 // Pop the value at the top of the stack into the given register
+#define POP  0b01000110
+#define CALL 0b01010000
+#define RET  0b00010001
+#define ADD  0b10100000
 #define JMP	 0b01010100
 #define CMP  0b10100111
 #define JEQ	 0b01010101

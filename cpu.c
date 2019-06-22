@@ -20,23 +20,6 @@ void cpu_ram_write(struct cpu *cpu, unsigned char index, unsigned char mdr)
   cpu->ram[index] = mdr;
 }
 
-void cpu_push(struct cpu *cpu, unsigned char val)
-{
-  // Decrement SP
-  cpu->registers[SP]--;
-  // Copy the value in the given reg to the address pointed to by SP
-  cpu_ram_write(cpu, cpu->registers[SP], val);
-}
-
-unsigned char cpu_pop(struct cpu *cpu)
-{
-  //Read last value from stack
-  unsigned char val = cpu_ram_read(cpu, cpu->registers[SP]);
-  // Increment SP
-  cpu->registers[SP]++;
-  return val;
-}
-
 /* Load the binary bytes from a .ls8 source file into a RAM array */
 
 void cpu_load(struct cpu *cpu, char *filename)
@@ -48,7 +31,7 @@ void cpu_load(struct cpu *cpu, char *filename)
     exit(2);
   }
 
-  char line[8912]; //hold individual lines in the file
+  char line[1024]; //hold individual lines in the file
   int address = 0;
 
   while (fgets(line, sizeof(line), fp) != NULL)
@@ -76,6 +59,8 @@ void cpu_run(struct cpu *cpu)
   while (running)
   {
     command = cpu_ram_read(cpu, cpu->PC);
+
+    unsigned char operands = command >> 6;
     operand1 = cpu_ram_read(cpu, cpu->PC + 1);
     operand2 = cpu_ram_read(cpu, cpu->PC + 2);
 
@@ -84,32 +69,10 @@ void cpu_run(struct cpu *cpu)
     case LDI:
       // sets value of operand1 to the registers[operand1]
       cpu->registers[operand1] = operand2;
-      // Move the PC to the next instruction
-      cpu->PC += 3;
       break;
+
     case PRN:
       printf("%d\n", cpu->registers[operand1]);
-      // Move the PC to the next instruction
-      cpu->PC += 2;
-      break;
-    case MUL:
-      cpu->registers[operand1] *= operand2;
-      cpu->PC += 3;
-      break;
-    case ADD:
-      cpu->registers[operand1] += operand2;
-      cpu->PC += 3;
-      break;
-
-    cpu PUSH:
-      cpu_push(cpu, cpu->register[operand1]);
-      cpu->PC += 2;
-      break;
-
-    case POP:
-      // Copy the value from the address pointed to by SP to the given registers
-      cpu->registers[operand1] = cpu_pop(cpu);
-      cpu->PC += 2;
       break;
 
     case HLT:
@@ -119,11 +82,46 @@ void cpu_run(struct cpu *cpu)
       cpu->PC += 1;
       break;
 
+    case JMP:
+      cpu->PC = cpu->registers[operand1] - operands - 1;
+      break;
+
+    case CMP:
+      if (cpu->registers[operand1] == cpu->registers[operand2])
+      {
+        cpu->FL = 0b00000001;
+      }
+      // if op2 is greater set flag to 0b00000100
+      else if (cpu->registers[operand1] < cpu->registers[operand2])
+      {
+        cpu->FL = 0b00000100;
+      }
+      // if op1 is greater set flag to 0b00000010
+      else if (cpu->registers[operand1] > cpu->registers[operand2])
+      {
+        cpu->FL = 0b00000010;
+      }
+      break;
+
+    case JEQ:
+      if (cpu->FL == 00000001)
+      {
+        cpu->PC = cpu->registers[operand1] - operands - 1;
+      }
+      break;
+
+    case JNE:
+      if ((cpu->FL & 00000001) == 0)
+      {
+        cpu->PC = cpu->registers[operand1] - operands - 1;
+      }
+      break;
+
     default:
-    printf("Danger Will Robinson! DANGER!\n");
-    exit(1);
-    break;
+      printf("Danger Will Robinson! DANGER!\n");
+      exit(1);
     }
+    cpu->PC += operands + 1;
   }
 }
 

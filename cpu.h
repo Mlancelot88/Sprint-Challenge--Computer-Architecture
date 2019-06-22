@@ -4,35 +4,29 @@
 // Holds all information about the CPU
 struct cpu {
  unsigned int PC;
- unsigned int IM;
- unsigned int IS;
- unsigned int SP;
+ // FL = flag
+ unsigned int FL;
  unsigned char registers[8];
  unsigned char ram[256];
 };
 
 // ALU operations
 enum alu_op {
-	ALU_MUL,
-	// Add more here
-  ALU_ADD
+	ALU_CMP,
 };
 
-// Instructions
-
-// These use binary literals. If these aren't available with your compiler, hex
-// literals should be used.
+// Setup Instructions
 
 #define LDI  0b10000010
 #define PRN  0b01000111
 #define HLT  0b00000001
-// TODO: more instructions here. These can be used in cpu_run().
-#define MUL  0b10100010
-#define PUSH 0b01000101 // Pop the value at the top of the stack into the given register
-#define POP  0b01000110
-#define CALL  0b01010000
-#define RET  0b00010001
-#define ADD  0b10100000
+
+// Defined Instructions for Sprint
+#define JMP	 0b01010100
+#define CMP  0b10100111
+#define JEQ	 0b01010101
+#define JNE  0b01010110
+
 
 // Function declarations
 
